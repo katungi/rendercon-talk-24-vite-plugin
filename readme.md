@@ -18,36 +18,36 @@ Let's break down the implementation and understand the key Vite plugin hooks:
 function readMePlugin(): Plugin {
   let readmeFile: string;
   let outputFile: string;
-  
+
   return {
-    name: 'vite-plugin-readme',
-    
+    name: "vite-plugin-readme",
+
     // 1. Configuration Hook
     configResolved(config) {
-      readmeFile = path.resolve(config.root, "../readme.md")
-      outputFile = path.resolve(config.publicDir, "README.md")
+      readmeFile = path.resolve(config.root, "../readme.md");
+      outputFile = path.resolve(config.publicDir, "README.md");
     },
-    
+
     // 2. Development Server Hook
     configureServer(server) {
-      server.watcher.add(readmeFile)
+      server.watcher.add(readmeFile);
       server.watcher.on("change", async (file) => {
-        if (file === readmeFile) await fs.copyFile(readmeFile, outputFile)
-      })
+        if (file === readmeFile) await fs.copyFile(readmeFile, outputFile);
+      });
     },
-    
+
     // 3. Build Hook
     async buildStart() {
-      await fs.copyFile(readmeFile, outputFile)
+      await fs.copyFile(readmeFile, outputFile);
     },
-    
+
     // 4. Hot Module Replacement Hook
-    handleHotUpdate({file, server}) {
+    handleHotUpdate({ file, server }) {
       if (file === outputFile) {
-        server.hot.send({type: "custom", event: "readme-update"})
+        server.hot.send({ type: "custom", event: "readme-update" });
       }
-    }
-  }
+    },
+  };
 }
 ```
 
@@ -56,6 +56,7 @@ function readMePlugin(): Plugin {
 1. **`configResolved`**: This hook runs after Vite's config is resolved. We use it to set up file paths based on the final configuration.
 
 2. **`configureServer`**: Called when setting up the development server. We:
+
    - Add the README file to the server's file watcher
    - Set up a listener to copy the file when changes occur
 
@@ -69,23 +70,23 @@ The frontend code listens for updates and displays the README content:
 
 ```jsx
 function App() {
-  const [readme, setReadme] = useState("loading...")
+  const [readme, setReadme] = useState("loading...");
 
   useEffect(() => {
     function fetchReadme() {
       fetch("public/README.md")
         .then((response) => response.text())
-        .then((text) => setReadme(text))
+        .then((text) => setReadme(text));
     }
-    fetchReadme()
+    fetchReadme();
 
-    if(import.meta.hot) import.meta.hot.on("readme-update", fetchReadme)
-  }, [])
+    if (import.meta.hot) import.meta.hot.on("readme-update", fetchReadme);
+  }, []);
 
   return (
     // ... render content ...
     <pre>{readme}</pre>
-  )
+  );
 }
 ```
 
@@ -99,20 +100,18 @@ This code:
 To use the plugin in your Vite config:
 
 ```typescript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    readMePlugin()
-  ],
-})
+  plugins: [react(), readMePlugin()],
+});
 ```
 
 ## Key Concepts
 
 1. **Plugin Hooks**: Vite plugins use hooks to tap into different parts of the build process:
+
    - Configuration hooks (`configResolved`)
    - Server hooks (`configureServer`)
    - Build hooks (`buildStart`)
@@ -123,6 +122,14 @@ export default defineConfig({
 3. **Custom HMR Events**: You can send custom events from the server to the client using `server.hot.send()`.
 
 4. Configure the source and destination paths
+
+## Resources
+
+1. [Vite Plugin API](https://vitejs.dev/guide/api-plugin.html)
+2. [Vite Configuration](https://vitejs.dev/config/)
+3. [Awesome Rollup Plugins](https://github.com/rollup/awesome)
+4. [How to Write a Vite Plugin by Ross Robino](https://blog.robino.dev/posts/vite-plugin/)
+5. [How Vite Works by Lachlan Miller](https://www.youtube.com/watch?v=M_edImKoEt8)
 
 ## Conclusion
 
